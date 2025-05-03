@@ -235,7 +235,7 @@ with tab1:
                             
                             # Call the API to generate episodes
                             res = requests.post(
-                                "http://localhost:8000/generate",
+                                "https://mindsnacks.onrender.com/generate",
                                 json={"topics": topics, "num_episodes": num_episodes},
                                 headers={"Content-Type": "application/json"}
                             )
@@ -252,7 +252,7 @@ with tab1:
                                 with st.expander(f"{episode['title']}", expanded=(i == 0)):
                                     st.markdown(f"*{episode['description']}*")
                                     st.audio(
-                                        f"http://localhost:8000{episode['audio_url']}",
+                                        f"https://mindsnacks.onrender.com/{episode['audio_url']}",
                                         format="audio/mp3"
                                     )
                         except Exception as e:
@@ -305,7 +305,7 @@ with tab2:
                     st.markdown(f"**{episode['title']}**")
                     st.markdown(f"*{episode['description']}*")
                     st.audio(
-                        f"http://localhost:8000{episode['audio_url']}",
+                        f"https://mindsnacks.onrender.com{episode['audio_url']}",
                         format="audio/mp3"
                     )
                 
