@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import requests
 import json
 from datetime import datetime, timedelta
@@ -5,6 +6,8 @@ import random
 import os
 from typing import List, Dict
 import logging
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -133,9 +136,7 @@ class RecommendationEngine:
     def fetch_trending_news_topics(self) -> List[str]:
         """Fetch trending topics from news API"""
         try:
-            # If you have a NewsAPI.org API key
-            # Replace with your actual API key
-            news_api_key = os.getenv("NEWS_API_KEY", "")
+            news_api_key = os.getenv("NEWS_API_KEY")
             if not news_api_key:
                 return []
                 

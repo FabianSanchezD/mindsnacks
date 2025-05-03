@@ -11,6 +11,7 @@ from curiosity_recommendations import get_recommendations, track_topics
 import random
 import time
 
+
 # Page configuration
 st.set_page_config(
     page_title="MindSnacks",
@@ -167,52 +168,7 @@ with tab1:
                 # Reset warning after 2 seconds
                 st.session_state.show_warning = False
         
-        # Topic Boxes Display - Show selected topics as boxes
-        if st.session_state.topics_input:
-            topics_list = [t.strip() for t in st.session_state.topics_input.split(",") if t.strip()]
-            if topics_list:
-                st.markdown("#### Your selected topics:")
-                
-                # Create topic boxes with remove buttons
-                topic_cols = st.columns(3)  # Arrange topics in 3 columns
-                for i, topic in enumerate(topics_list):
-                    col_idx = i % 3
-                    with topic_cols[col_idx]:
-                        # Create topic box and button side by side with HTML/CSS
-                        st.markdown(f"""
-                        <div style="
-                            display: flex;
-                            margin-bottom: 10px;
-                        ">
-                            <div style="
-                                background-color: #f0f2f6;
-                                border-radius: 10px 0 0 10px;
-                                padding: 10px;
-                                flex-grow: 1;
-                                display: flex;
-                                align-items: center;
-                            ">
-                                <span style="font-size: 0.9rem;">{topic}</span>
-                            </div>
-                            <button onclick="document.getElementById('remove_{i}_button').click();" style="
-                                background-color: #e53935;
-                                color: white;
-                                border: none;
-                                border-radius: 0 10px 10px 0;
-                                padding: 10px 12px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-weight: bold;
-                                cursor: pointer;
-                            ">✕</button>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Hidden button for the actual removal logic
-                        if st.button("✕", key=f"remove_{i}_button", help="Remove this topic"):
-                            remove_topic(i)
-                            st.rerun()
+        #Personally, adding a box feature for each topic would be good.
         
         # Now add hidden text area for storing the actual comma-separated values
         topics_input = st.text_area(
@@ -313,22 +269,14 @@ with tab1:
         st.markdown("### 💡 Curious about...")
         
         # Get topic recommendations
-        recommendations = get_recommendations(3)
-        
-        # Display recommendations by category
+        recommendations = get_recommendations()
+
         for category, topics in recommendations.items():
-            # Format category name for display
-            display_category = category.replace("_", " ").title()
-            
-            st.markdown(f"#### {display_category}")
-            
-            # Create clickable buttons for topics
-            cols = st.columns(len(topics))
-            for i, topic in enumerate(topics):
-                with cols[i]:
-                    if st.button(topic, key=f"{category}_{i}", use_container_width=True):
-                        # Use the new function to add this recommendation to the input
-                        add_recommendation(topic)
+            st.markdown(f"**{category}**")
+            for topic in topics:
+                if st.button(f"➕ {topic}", key=f"recommendation_{topic}"):
+                    added = add_recommendation(topic)
+                    if added:
                         st.rerun()
 
 # History tab
