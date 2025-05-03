@@ -1,10 +1,8 @@
 import streamlit as st
-from PIL import Image
 import requests
 import json
 import os
 from datetime import datetime
-from urllib.parse import urljoin
 import base64
 
 # Import our recommendation engine and random for "Fill my curiosity"
@@ -61,18 +59,29 @@ def set_warning(message):
 
 # Function to generate random topics for "Fill my curiosity"
 def fill_my_curiosity():
-    # Get all available recommendations
-    all_recommendations = get_recommendations(5)  # Get more recommendations
-    
-    # Flatten all recommendations into a single list
-    all_topics = []
-    for category, topics in all_recommendations.items():
-        all_topics.extend(topics)
+    # Define a set of default topics since the recommendation system isn't working properly
+    default_topics = [
+        "The history of space exploration", 
+        "How artificial intelligence works",
+        "The science of climate change",
+        "Evolution of human language",
+        "Ancient civilizations",
+        "Quantum physics for beginners",
+        "The psychology of happiness",
+        "How the internet works",
+        "The science of sleep",
+        "Famous historical inventions",
+        "Marine biology discoveries",
+        "The future of renewable energy",
+        "The human brain explained",
+        "World cuisine origins",
+        "The philosophy of time"
+    ]
     
     # Shuffle and select random topics (1-3)
-    random.shuffle(all_topics)
+    random.shuffle(default_topics)
     num_topics = random.randint(1, 3)
-    selected_topics = all_topics[:num_topics]
+    selected_topics = default_topics[:num_topics]
     
     # Clear existing topics and add new ones
     st.session_state.topics_input = ", ".join(selected_topics)
@@ -163,17 +172,9 @@ def get_download_link(audio_url, filename):
     except Exception as e:
         return f"<span style='color:red'>Download error: {str(e)}</span>"
 
-# Header and logo
-col1, col2 = st.columns([1, 5])
-with col1:
-    try:
-        logo = Image.open("mindsnacks_logov2_nospace.png")
-        st.image(logo, width=120)
-    except Exception as e:
-        st.error(f"Could not load logo: {e}")
-with col2:
-    st.title("🧠 MindSnacks")
-    st.subheader("Bite-sized learning for hungry minds")
+# Centered header
+st.markdown("<h1 style='text-align: center; margin-bottom: 0;'>🧠 MindSnacks</h1>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align: center; margin-top: 0;'>Bite-sized learning for hungry minds</h3>", unsafe_allow_html=True)
 
 # Create tabs for different views
 tab1, tab2 = st.tabs(["Create", "History"])
@@ -193,8 +194,6 @@ with tab1:
             else:
                 # Reset warning after 2 seconds
                 st.session_state.show_warning = False
-        
-        #Personally, adding a box feature for each topic would be good.
         
         # Now add hidden text area for storing the actual comma-separated values
         topics_input = st.text_area(
@@ -317,21 +316,21 @@ with tab1:
     with col2:
         st.markdown("### 💡 Curious about...")
         
-        # Get topic recommendations
-        recommendations = get_recommendations()
+        # Define fixed categories and topics since the recommendation system isn't working properly
+        fixed_recommendations = {
+            "Science": ["Quantum physics", "Marine biology", "Astronomy", "Genetics", "Climate science"],
+            "History": ["Ancient civilizations", "World War II", "Renaissance art", "Industrial revolution", "Space race"],
+            "Technology": ["Artificial intelligence", "Blockchain", "Augmented reality", "Robotics", "Cybersecurity"],
+            "Arts & Culture": ["Film history", "Modern literature", "Classical music", "Architecture styles", "Visual arts"]
+        }
         
-        # Check if recommendations are empty or not properly formatted
-        if not recommendations or not isinstance(recommendations, dict) or len(recommendations) == 0:
-            st.warning("Recommendation system is currently not available. Please try again later.")
-        else:
-            for category, topics in recommendations.items():
-                if topics:  # Only show categories with topics
-                    st.markdown(f"**{category.replace('_', ' ').title()}**")
-                    for topic in topics:
-                        if st.button(f"➕ {topic}", key=f"recommendation_{topic}"):
-                            added = add_recommendation(topic)
-                            if added:
-                                st.rerun()
+        for category, topics in fixed_recommendations.items():
+            st.markdown(f"**{category}**")
+            for topic in topics:
+                if st.button(f"➕ {topic}", key=f"recommendation_{topic}"):
+                    added = add_recommendation(topic)
+                    if added:
+                        st.rerun()
 
 # History tab
 with tab2:
