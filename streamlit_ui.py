@@ -4,21 +4,17 @@ import json
 import os
 from datetime import datetime
 import base64
-
-# Import our recommendation engine and random for "Fill my curiosity"
 from curiosity_recommendations import get_recommendations, track_topics
 import random
 import time
 
 
-# Page configuration
 st.set_page_config(
     page_title="MindSnacks",
     page_icon="🧠",
     layout="wide"
 )
 
-# Initialize session state variables
 if 'history' not in st.session_state:
     st.session_state.history = []
     # Try to load history from file
@@ -43,14 +39,6 @@ if 'show_warning' not in st.session_state:
     st.session_state.warning_message = ""
     st.session_state.warning_time = 0
 
-# Function to remove a topic from the list
-def remove_topic(index):
-    topics_list = [t.strip() for t in st.session_state.topics_input.split(",") if t.strip()]
-    if 0 <= index < len(topics_list):
-        topics_list.pop(index)
-        st.session_state.topics_input = ", ".join(topics_list)
-        update_episode_count()
-
 # Function to set a warning with minimum display time
 def set_warning(message):
     st.session_state.show_warning = True
@@ -59,7 +47,6 @@ def set_warning(message):
 
 # Function to generate random topics for "Fill my curiosity"
 def fill_my_curiosity():
-    # Define a set of default topics since the recommendation system isn't working properly
     default_topics = [
         "The history of space exploration", 
         "How artificial intelligence works",
@@ -78,12 +65,10 @@ def fill_my_curiosity():
         "The philosophy of time"
     ]
     
-    # Shuffle and select random topics (1-3)
     random.shuffle(default_topics)
     num_topics = random.randint(1, 3)
     selected_topics = default_topics[:num_topics]
     
-    # Clear existing topics and add new ones
     st.session_state.topics_input = ", ".join(selected_topics)
     update_episode_count()
 
@@ -103,8 +88,8 @@ def add_to_history(topics, episodes):
         "episodes": episodes
     }
     st.session_state.history.insert(0, history_entry)  # Add to beginning
-    # Keep only the most recent 50 entries
-    st.session_state.history = st.session_state.history[:50]
+    # Keep only the most recent 20 entries
+    st.session_state.history = st.session_state.history[:20]
     save_history()
     
 # Function to update episode count based on topic count
@@ -150,52 +135,40 @@ def add_recommendation(topic):
         return True
     return False
 
-# Function to create a download link for audio files
 def get_download_link(audio_url, filename):
     try:
-        # Construct full URL to fetch audio file
         if audio_url.startswith('http'):
             full_url = audio_url
         else:
             full_url = f"https://mindsnacks.onrender.com{audio_url}"
-        
-        # Get file content
+
         response = requests.get(full_url)
-        response.raise_for_status()  # Raise exception for bad status codes
+        response.raise_for_status() 
         
-        # Encode file content to base64
         b64 = base64.b64encode(response.content).decode()
         
-        # Create download link
         href = f'<a href="data:audio/mp3;base64,{b64}" download="{filename}">📥 Download MP3</a>'
         return href
     except Exception as e:
         return f"<span style='color:red'>Download error: {str(e)}</span>"
 
-# Centered header
 st.markdown("<h1 style='text-align: center; margin-bottom: 0;'>🧠 MindSnacks</h1>", unsafe_allow_html=True)
 st.markdown("<h3 style='text-align: center; margin-top: 0;'>Bite-sized learning for hungry minds</h3>", unsafe_allow_html=True)
 
-# Create tabs for different views
 tab1, tab2 = st.tabs(["Create", "History"])
 
 with tab1:
-    # Main column layout
     col1, col2 = st.columns([3, 2])
     
     with col1:
         st.markdown("### What do you want to learn about today?")
         
-        # Display persistent warning if needed
         if st.session_state.show_warning:
-            # Check if the warning has been displayed for at least 2 seconds
             if time.time() - st.session_state.warning_time < 2:
                 st.warning(st.session_state.warning_message, icon="⚠️")
             else:
-                # Reset warning after 2 seconds
                 st.session_state.show_warning = False
         
-        # Now add hidden text area for storing the actual comma-separated values
         topics_input = st.text_area(
             "Enter topics or a question",
             value=st.session_state.topics_input,
@@ -235,7 +208,6 @@ with tab1:
             
             num_episodes = st.slider("Number of episodes", 1, 10, st.session_state.num_episodes, key="episode_slider")
         
-        # Create two columns for the buttons
         button_col1, button_col2 = st.columns([3, 2])
         
         with button_col1:
@@ -246,8 +218,6 @@ with tab1:
                     # Handle comma-separated list
                     topics = [topic.strip() for topic in topics_input.split(",") if topic.strip()]
                 else:
-                    # For natural language, we'll treat the whole input as one topic
-                    # In a production app, you might use NLP to extract keywords
                     topics = [topics_input.strip()]
                 
                 if not topics:
@@ -259,13 +229,13 @@ with tab1:
                             track_topics(topics)
                             
                             # Call the API to generate episodes
-                            api_url = "http://localhost:8000/generate"  # Use local dev server if available
+                            api_url = "https://mindsnacks.onrender.com/generate"  
                             try:
                                 res = requests.post(
                                     api_url,
                                     json={"topics": topics, "num_episodes": num_episodes},
                                     headers={"Content-Type": "application/json"},
-                                    timeout=2  # Short timeout to check if local server is available
+                                    timeout=2  
                                 )
                             except requests.exceptions.RequestException:
                                 # Fall back to production server if local server not available
@@ -279,27 +249,25 @@ with tab1:
                             res.raise_for_status()
                             episodes = res.json()
                             
-                            # Add to history
                             add_to_history(topics, episodes)
                             
-                            # Display results
-                            st.success(f"Created {len(episodes)} learning episodes!")
+
+                            if len(episodes) == 1:
+                                st.success(f"Created {len(episodes)} learning episode!")
+                            else:
+                                st.success(f"Created {len(episodes)} learning episodes!")
                             
                             for i, episode in enumerate(episodes):
                                 with st.expander(f"{episode['title']}", expanded=(i == 0)):
-                                    # Clean description (remove markdown characters)
                                     clean_description = episode['description'].replace('*', '').replace('#', '')
                                     st.markdown(f"*{clean_description}*")
                                     
-                                    # Audio source URL - handle both relative and absolute URLs
                                     audio_url = episode['audio_url']
                                     if not audio_url.startswith('http'):
                                         audio_url = f"https://mindsnacks.onrender.com{audio_url}"
-                                    
-                                    # Display audio player
+
                                     st.audio(audio_url, format="audio/mp3")
                                     
-                                    # Add download button
                                     filename = f"{episode['title'].replace(':', '-').replace(' ', '_')}.mp3"
                                     download_link = get_download_link(episode['audio_url'], filename)
                                     st.markdown(download_link, unsafe_allow_html=True)
@@ -307,7 +275,6 @@ with tab1:
                             st.error(f"Error: {e}")
         
         with button_col2:
-            # Fill my curiosity button
             if st.button("🎲 Fill my curiosity!", use_container_width=True):
                 fill_my_curiosity()
                 st.rerun()
@@ -359,7 +326,7 @@ with tab1:
                     if added:
                         st.rerun()
 
-# History tab
+
 with tab2:
     st.markdown("### Your Learning History")
     
@@ -410,7 +377,6 @@ with tab2:
                     st.session_state.topics_input = ", ".join(entry["topics"])
                     st.rerun()
 
-# Add CSS for better styling
 st.markdown("""
 <style>
     .stButton button {

@@ -16,7 +16,7 @@ class RecommendationEngine:
     
     def __init__(self):
         self.cache_file = "topic_cache.json"
-        self.cache_expiry = 6  # hours - reduced from 24 to refresh more frequently
+        self.cache_expiry = 24 
         
         # Initialize with default topics in case external APIs fail
         self.default_topics = {
@@ -93,7 +93,6 @@ class RecommendationEngine:
             if not normalized_topic:
                 continue
                 
-            # Check if topic already exists
             existing_topic = next((item for item in self.popular_user_topics 
                                 if item["topic"].lower() == normalized_topic), None)
             
@@ -102,19 +101,18 @@ class RecommendationEngine:
                 existing_topic["last_used"] = datetime.now().isoformat()
             else:
                 self.popular_user_topics.append({
-                    "topic": topic,  # Keep original capitalization for display
+                    "topic": topic,
                     "count": 1,
                     "last_used": datetime.now().isoformat()
                 })
         
-        # Sort by popularity (count) and recency (last_used)
         self.popular_user_topics.sort(
             key=lambda x: (x["count"], datetime.fromisoformat(x["last_used"])), 
             reverse=True
         )
         
-        # Keep only top 100 topics to avoid unlimited growth
-        self.popular_user_topics = self.popular_user_topics[:100]
+        # Keep only top 30 topics to avoid unlimited growth
+        self.popular_user_topics = self.popular_user_topics[:30]
         
         # Save to file
         self.save_user_topic_history()
@@ -178,11 +176,9 @@ class RecommendationEngine:
                        "will", "would", "shall", "should", "may", "might", "must", "can",
                        "could", "says", "said", "according", "reported"]
         
-        # Clean and normalize the title
         cleaned_title = ''.join(c.lower() if c.isalnum() else ' ' for c in title)
         words = cleaned_title.split()
         
-        # Extract words that are not stop words and are meaningful (longer than 3 chars)
         keywords = [word for word in words if word not in stop_words and len(word) > 3]
         
         return keywords
@@ -315,7 +311,6 @@ def get_recommendations(count_per_category: int = 3) -> Dict[str, List[str]]:
     try:
         recommendations = recommendation_engine.get_recommendations()
         
-        # Limit the number of topics per category
         for category in recommendations:
             if isinstance(recommendations[category], list):
                 recommendations[category] = recommendations[category][:count_per_category]
@@ -330,9 +325,3 @@ def get_recommendations(count_per_category: int = 3) -> Dict[str, List[str]]:
         # Return default recommendations if something goes wrong
         return {"featured": ["Quantum physics", "History of aviation", "Marine biology"]}
 
-def track_topics(topics: List[str]):
-    """Track topics that users select"""
-    try:
-        recommendation_engine.track_user_topics(topics)
-    except Exception as e:
-        logging.error(f"Error tracking topics: {e}")

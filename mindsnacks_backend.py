@@ -10,11 +10,9 @@ from dotenv import load_dotenv
 import re
 import logging
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Load environment variables
 load_dotenv()
 
 # Initialize FastAPI app
@@ -24,17 +22,14 @@ app = FastAPI()
 os.makedirs("static/audio", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Load API keys from environment variables
 openai.api_key = os.getenv("OPENAI_API_KEY")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 
-# Check if API keys are available
 if not openai.api_key:
     logger.error("OPENAI_API_KEY not found in environment variables")
 if not ELEVENLABS_API_KEY:
     logger.error("ELEVENLABS_API_KEY not found in environment variables")
 
-# Define request and response models
 class EpisodeRequest(BaseModel):
     topics: List[str]
     num_episodes: int = 6
@@ -97,7 +92,7 @@ def parse_episodes(text):
         current_episode = 1
         
         for chunk in chunks:
-            if len(chunk.strip()) > 100:  # Substantial content
+            if len(chunk.strip()) > 100:  
                 episodes.append({
                     "title": f"Episode {current_episode}",
                     "content": chunk.strip()
@@ -127,14 +122,13 @@ async def generate_episodes(req: EpisodeRequest):
                  f"2. A 3 sentence description of the episode content\n"
                  f"3. A complete narration script clearly labeled as 'SCRIPT:' that's ready to be read aloud\n\n"
                  f"4. NEVER put anything after the end of the script. The TTS could read it and it is not good."
-                 f"Format each episode with clear separation between episodes and make sure the script part is extensive enough to be read in about 7 minutes.")
+                 f"Format each episode with clear separation between episodes and make sure the script part is extensive enough to be read in about 7 minutes.") #7 minutes because the API underestimates the voice's speed
         
-        # Call OpenAI API using the new client
         client = openai.OpenAI()
         response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",  # Updated model name
+            model="gpt-4-turbo-preview", 
             messages=[
-                {"role": "system", "content": "You are a brilliant educational podcaster who creates clear, engaging 7-minute scripts."},
+                {"role": "system", "content": "You are a brilliant educational podcaster who creates clear, engaging 7-minute scripts."}, 
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7
@@ -155,12 +149,10 @@ async def generate_episodes(req: EpisodeRequest):
         
         # Process each episode
         for i, episode in enumerate(episodes[:req.num_episodes]):
-            # Extract episode title and content
             title = episode["title"]
             content = episode["content"]
             
-            # Create description (first few sentences or characters)
-            description = content[:300] + "..." if len(content) > 300 else content
+            description = content
             
             try:
                 # Prepare script for TTS - focus on the actual content that needs to be narrated
@@ -175,7 +167,6 @@ async def generate_episodes(req: EpisodeRequest):
                 
                 for marker in script_markers:
                     if marker in content.lower():
-                        # Extract everything after the marker
                         parts = re.split(f"(?i){re.escape(marker)}", content, 1)
                         if len(parts) > 1:
                             script_text = parts[1].strip()
@@ -187,15 +178,14 @@ async def generate_episodes(req: EpisodeRequest):
                     logger.info(f"Script too long ({len(script_text)} chars), truncating to 4000 chars")
                     script_text = script_text[:4000]
                 
-                # Make sure we have content to narrate
                 if len(script_text) < 50:
                     logger.warning(f"Script for episode {i+1} is too short, using full content")
-                    script_text = content[:4000]  # Use the full content but limited to 4000 chars
+                    script_text = content[:4000] 
                 
                 logger.info(f"Sending {len(script_text)} chars to ElevenLabs for episode {i+1}")
                 
                 # Call ElevenLabs API for text-to-speech
-                tts_url = "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL"  # A specific voice ID
+                tts_url = "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL"
                 
                 tts_response = requests.post(
                     tts_url,
@@ -210,7 +200,6 @@ async def generate_episodes(req: EpisodeRequest):
                     }
                 )
                 
-                # Check response status and content
                 if tts_response.status_code != 200:
                     logger.error(f"ElevenLabs API error: {tts_response.status_code} - {tts_response.text}")
                     raise HTTPException(
@@ -225,7 +214,6 @@ async def generate_episodes(req: EpisodeRequest):
                 with open(audio_path, "wb") as f:
                     f.write(tts_response.content)
                 
-                # Construct audio URL
                 audio_url = f"/static/audio/{audio_filename}"
                 
                 # Add to results
@@ -252,7 +240,6 @@ async def generate_episodes(req: EpisodeRequest):
         logger.error(f"Error in generate_episodes: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-# Root endpoint for API health check
 @app.get("/")
 async def root():
     return {"status": "ok", "message": "MindSnacks API is running"}

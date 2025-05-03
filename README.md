@@ -19,7 +19,7 @@ Not sure what to learn? Just type your interest and get a personalized audio pla
 - Python, Streamlit (frontend), FastAPI (backend) HTML/CSS (just a bit)
 
 # Setup
-2 ways to try this app:
+## 2 ways to try this app:
 ## a. Using the already deployed version (recommended)
 1. Click this link: https://mindsnacks.streamlit.app/
 
@@ -36,7 +36,11 @@ NEWS_API_KEY=your_newsapi_key
 ```
 Note: 11Labs and NewsAPI provide free trials that could be used to try this out.
 
+3. IMPORTANT: The files on GitHub are made so that the app is deployed, so we need to change everywhere `https://mindsnacks.onrender.com` this appears, to `http://localhost:8000/`. (This is ONLY on the `streamlit_ui.py` file)
+
 3. Install all dependencies with  `pip install -r requirements.txt`
+4. Run backend with: `python run main.py`
+5. Run frontend with:  ``
 
 
 # Features & Usage

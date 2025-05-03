@@ -1,7 +1,6 @@
 import uvicorn
 from fastapi.staticfiles import StaticFiles
 from mindsnacks_backend import app
-
 import os
 import json
 import logging
