@@ -4,7 +4,7 @@ import json
 import os
 from datetime import datetime
 import base64
-from curiosity_recommendations import get_recommendations, track_topics
+from curiosity_recommendations import get_recommendations
 import random
 import time
 
@@ -225,8 +225,6 @@ with tab1:
                 else:
                     with st.spinner("Generating your personalized audio snippets..."):
                         try:
-                            # Track user topics for recommendations
-                            track_topics(topics)
                             
                             # Call the API to generate episodes
                             api_url = "https://mindsnacks.onrender.com/generate"  
@@ -298,10 +296,7 @@ with tab1:
                     for topic in topics:
                         if st.button(f"➕ {topic}", key=f"recommendation_{category}_{topic}"):
                             added = add_recommendation(topic)
-                            if added:
-                                # When a topic is added, track it for future recommendations
-                                track_topics([topic])
-                                st.rerun()
+
             else:
                 # Fallback to some default categories if the recommendation engine failed
                 fallback_recommendations = {
