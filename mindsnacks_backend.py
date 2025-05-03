@@ -121,19 +121,19 @@ async def generate_episodes(req: EpisodeRequest):
         
         # Create the prompt
         logger.info(f"Generating {req.num_episodes} episodes on topics: {topics_text}")
-        prompt = (f"Create {req.num_episodes} educational podcast episode scripts (~5 minutes each) "
+        prompt = (f"Create {req.num_episodes} educational podcast episode scripts (~7 minutes each) "
                  f"on these topics: {topics_text}. For each episode, include:\n"
                  f"1. A title that starts with 'Episode X:' where X is the episode number\n"
                  f"2. A 3-5 sentence description of the episode content\n"
                  f"3. A complete narration script clearly labeled as 'SCRIPT:' that's ready to be read aloud\n\n"
-                 f"Format each episode with clear separation between episodes and make sure the script part is extensive enough to be read in about 5 minutes.")
+                 f"Format each episode with clear separation between episodes and make sure the script part is extensive enough to be read in about 7 minutes.")
         
         # Call OpenAI API using the new client
         client = openai.OpenAI()
         response = client.chat.completions.create(
             model="gpt-4-turbo-preview",  # Updated model name
             messages=[
-                {"role": "system", "content": "You are a brilliant educational podcaster who creates clear, engaging 5-minute scripts."},
+                {"role": "system", "content": "You are a brilliant educational podcaster who creates clear, engaging 7-minute scripts."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7
