@@ -65,8 +65,14 @@ class RecommendationEngine:
                     if isinstance(data, list) and all(isinstance(item, dict) for item in data):
                         self.popular_user_topics = data
                     else:
+                        # Handle case where the file exists but has invalid format (empty or wrong type)
                         logger.warning("Invalid data format in user topic history file. Resetting to empty list.")
                         self.popular_user_topics = []
+            else:
+                # Create an empty file if it doesn't exist
+                with open(self.user_topic_history_file, 'w') as f:
+                    json.dump([], f)
+                self.popular_user_topics = []
         except Exception as e:
             logger.error(f"Error loading user topic history: {e}")
             self.popular_user_topics = []
@@ -110,14 +116,29 @@ class RecommendationEngine:
         if os.path.exists(self.cache_file):
             try:
                 with open(self.cache_file, 'r') as f:
-                    cache_data = json.load(f)
-                
-                # Check if cache is expired
-                cache_time = datetime.fromisoformat(cache_data.get("timestamp", "2000-01-01T00:00:00"))
-                if datetime.now() - cache_time < timedelta(hours=self.cache_expiry):
-                    return cache_data.get("topics", self.default_topics)
+                    content = f.read().strip()
+                    if content:  # Check if the file is not empty
+                        cache_data = json.loads(content)
+                        
+                        # Check if cache is expired
+                        cache_time = datetime.fromisoformat(cache_data.get("timestamp", "2000-01-01T00:00:00"))
+                        if datetime.now() - cache_time < timedelta(hours=self.cache_expiry):
+                            return cache_data.get("topics", self.default_topics)
+                    else:
+                        # Create a new cache with default topics if file is empty
+                        self.save_to_cache(self.default_topics)
+                        return self.default_topics
+            except json.JSONDecodeError:
+                logger.error("Invalid JSON in cache file, recreating")
+                self.save_to_cache(self.default_topics)
+                return self.default_topics
             except Exception as e:
                 logger.error(f"Error reading cache: {e}")
+                return self.default_topics
+        else:
+            # Create cache file if it doesn't exist
+            self.save_to_cache(self.default_topics)
+            return self.default_topics
         
         return None
 
@@ -187,7 +208,7 @@ class RecommendationEngine:
         if user_topics:
             topics["popular"] = user_topics
         
-        # Add topics from predefined categories
+        # Always include default topics as a fallback
         for category, category_topics in self.default_topics.items():
             # Randomly select 3-5 topics from each category
             random_count = min(random.randint(3, 5), len(category_topics))
@@ -203,14 +224,22 @@ recommendation_engine = RecommendationEngine()
 
 def get_recommendations(count_per_category: int = 3) -> Dict[str, List[str]]:
     """Get recommendations for the UI"""
-    recommendations = recommendation_engine.get_recommendations()
-    
-    # Limit the number of topics per category
-    for category in recommendations:
-        recommendations[category] = recommendations[category][:count_per_category]
-    
-    return recommendations
+    try:
+        recommendations = recommendation_engine.get_recommendations()
+        
+        # Limit the number of topics per category
+        for category in recommendations:
+            recommendations[category] = recommendations[category][:count_per_category]
+        
+        return recommendations
+    except Exception as e:
+        logging.error(f"Error getting recommendations: {e}")
+        # Return default recommendations if something goes wrong
+        return {"featured": ["Quantum physics", "History of aviation", "Marine biology"]}
 
 def track_topics(topics: List[str]):
     """Track topics that users select"""
-    recommendation_engine.track_user_topics(topics)
+    try:
+        recommendation_engine.track_user_topics(topics)
+    except Exception as e:
+        logging.error(f"Error tracking topics: {e}")

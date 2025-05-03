@@ -16,3 +16,7 @@ for filename in ["user_history.json", "topic_cache.json", "user_topic_history.js
 
 # Mount static directory for serving audio files
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Only needed for local development
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)

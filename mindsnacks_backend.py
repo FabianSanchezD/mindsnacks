@@ -124,8 +124,9 @@ async def generate_episodes(req: EpisodeRequest):
         prompt = (f"Create {req.num_episodes} educational podcast episode scripts (~7 minutes each) "
                  f"on these topics: {topics_text}. For each episode, include:\n"
                  f"1. A title that starts with 'Episode X:' where X is the episode number\n"
-                 f"2. A 3-5 sentence description of the episode content\n"
+                 f"2. A 3 sentence description of the episode content\n"
                  f"3. A complete narration script clearly labeled as 'SCRIPT:' that's ready to be read aloud\n\n"
+                 f"4. NEVER put anything after the end of the script. The TTS could read it and it is not good."
                  f"Format each episode with clear separation between episodes and make sure the script part is extensive enough to be read in about 7 minutes.")
         
         # Call OpenAI API using the new client

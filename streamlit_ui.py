@@ -5,6 +5,7 @@ import json
 import os
 from datetime import datetime
 from urllib.parse import urljoin
+import base64
 
 # Import our recommendation engine and random for "Fill my curiosity"
 from curiosity_recommendations import get_recommendations, track_topics
@@ -140,11 +141,36 @@ def add_recommendation(topic):
         return True
     return False
 
+# Function to create a download link for audio files
+def get_download_link(audio_url, filename):
+    try:
+        # Construct full URL to fetch audio file
+        if audio_url.startswith('http'):
+            full_url = audio_url
+        else:
+            full_url = f"https://mindsnacks.onrender.com{audio_url}"
+        
+        # Get file content
+        response = requests.get(full_url)
+        response.raise_for_status()  # Raise exception for bad status codes
+        
+        # Encode file content to base64
+        b64 = base64.b64encode(response.content).decode()
+        
+        # Create download link
+        href = f'<a href="data:audio/mp3;base64,{b64}" download="{filename}">📥 Download MP3</a>'
+        return href
+    except Exception as e:
+        return f"<span style='color:red'>Download error: {str(e)}</span>"
+
 # Header and logo
 col1, col2 = st.columns([1, 5])
 with col1:
-    logo = Image.open("mindsnacks_logov2_nospace.png")
-    st.image(logo, width=120)
+    try:
+        logo = Image.open("mindsnacks_logov2_nospace.png")
+        st.image(logo, width=120)
+    except Exception as e:
+        st.error(f"Could not load logo: {e}")
 with col2:
     st.title("🧠 MindSnacks")
     st.subheader("Bite-sized learning for hungry minds")
@@ -234,11 +260,23 @@ with tab1:
                             track_topics(topics)
                             
                             # Call the API to generate episodes
-                            res = requests.post(
-                                "https://mindsnacks.onrender.com/generate",
-                                json={"topics": topics, "num_episodes": num_episodes},
-                                headers={"Content-Type": "application/json"}
-                            )
+                            api_url = "http://localhost:8000/generate"  # Use local dev server if available
+                            try:
+                                res = requests.post(
+                                    api_url,
+                                    json={"topics": topics, "num_episodes": num_episodes},
+                                    headers={"Content-Type": "application/json"},
+                                    timeout=2  # Short timeout to check if local server is available
+                                )
+                            except requests.exceptions.RequestException:
+                                # Fall back to production server if local server not available
+                                api_url = "https://mindsnacks.onrender.com/generate"
+                                res = requests.post(
+                                    api_url,
+                                    json={"topics": topics, "num_episodes": num_episodes},
+                                    headers={"Content-Type": "application/json"}
+                                )
+                                
                             res.raise_for_status()
                             episodes = res.json()
                             
@@ -250,11 +288,22 @@ with tab1:
                             
                             for i, episode in enumerate(episodes):
                                 with st.expander(f"{episode['title']}", expanded=(i == 0)):
-                                    st.markdown(f"*{episode['description']}*")
-                                    st.audio(
-                                        f"https://mindsnacks.onrender.com/{episode['audio_url']}",
-                                        format="audio/mp3"
-                                    )
+                                    # Clean description (remove markdown characters)
+                                    clean_description = episode['description'].replace('*', '').replace('#', '')
+                                    st.markdown(f"*{clean_description}*")
+                                    
+                                    # Audio source URL - handle both relative and absolute URLs
+                                    audio_url = episode['audio_url']
+                                    if not audio_url.startswith('http'):
+                                        audio_url = f"https://mindsnacks.onrender.com{audio_url}"
+                                    
+                                    # Display audio player
+                                    st.audio(audio_url, format="audio/mp3")
+                                    
+                                    # Add download button
+                                    filename = f"{episode['title'].replace(':', '-').replace(' ', '_')}.mp3"
+                                    download_link = get_download_link(episode['audio_url'], filename)
+                                    st.markdown(download_link, unsafe_allow_html=True)
                         except Exception as e:
                             st.error(f"Error: {e}")
         
@@ -270,14 +319,19 @@ with tab1:
         
         # Get topic recommendations
         recommendations = get_recommendations()
-
-        for category, topics in recommendations.items():
-            st.markdown(f"**{category}**")
-            for topic in topics:
-                if st.button(f"➕ {topic}", key=f"recommendation_{topic}"):
-                    added = add_recommendation(topic)
-                    if added:
-                        st.rerun()
+        
+        # Check if recommendations are empty or not properly formatted
+        if not recommendations or not isinstance(recommendations, dict) or len(recommendations) == 0:
+            st.warning("Recommendation system is currently not available. Please try again later.")
+        else:
+            for category, topics in recommendations.items():
+                if topics:  # Only show categories with topics
+                    st.markdown(f"**{category.replace('_', ' ').title()}**")
+                    for topic in topics:
+                        if st.button(f"➕ {topic}", key=f"recommendation_{topic}"):
+                            added = add_recommendation(topic)
+                            if added:
+                                st.rerun()
 
 # History tab
 with tab2:
@@ -298,16 +352,32 @@ with tab2:
                 or any(search_term.lower() in ep["title"].lower() for ep in entry["episodes"])
             ]
         
+        # Show message if no results found
+        if search_term and not filtered_history:
+            st.warning("No results found. Try a different search term.")
+        
         # Display history entries
         for entry in filtered_history:
             with st.expander(f"{entry['date']} - Topics: {', '.join(entry['topics'])}"):
                 for episode in entry["episodes"]:
                     st.markdown(f"**{episode['title']}**")
-                    st.markdown(f"*{episode['description']}*")
-                    st.audio(
-                        f"https://mindsnacks.onrender.com{episode['audio_url']}",
-                        format="audio/mp3"
-                    )
+                    
+                    # Clean description (remove markdown characters)
+                    clean_description = episode['description'].replace('*', '').replace('#', '')
+                    st.markdown(f"*{clean_description}*")
+                    
+                    # Audio source URL - handle both relative and absolute URLs
+                    audio_url = episode['audio_url']
+                    if not audio_url.startswith('http'):
+                        audio_url = f"https://mindsnacks.onrender.com{audio_url}"
+                    
+                    # Display audio player
+                    st.audio(audio_url, format="audio/mp3")
+                    
+                    # Add download button
+                    filename = f"{episode['title'].replace(':', '-').replace(' ', '_')}.mp3"
+                    download_link = get_download_link(episode['audio_url'], filename)
+                    st.markdown(download_link, unsafe_allow_html=True)
                 
                 # Add a re-generate button
                 if st.button("Regenerate this playlist", key=f"regen_{entry['date']}"):
@@ -345,6 +415,21 @@ st.markdown("""
     /* Hide the default text area when there are topics */
     .hide-label label {
         display: none;
+    }
+    /* Download button styling */
+    a[download] {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        margin-top: 0.5rem;
+        text-decoration: none;
+        background-color: #f0f2f6;
+        color: #262730;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        transition: background-color 0.2s;
+    }
+    a[download]:hover {
+        background-color: #e0e2e6;
     }
 </style>
 """, unsafe_allow_html=True)
