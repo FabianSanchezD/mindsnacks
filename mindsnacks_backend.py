@@ -293,7 +293,7 @@ async def generate_episodes(req: EpisodeRequest):
                  f"1. A title that starts with 'Episode X:' where X is the episode number\n"
                  f"2. A 3 sentence description of the episode content\n"
                  f"3. A complete narration script clearly labeled as 'SCRIPT:' that's ready to be read aloud\n\n"
-                 f"4. NEVER put anything after the end of the script. The TTS could read it and it is not good.")
+                 f"4. NEVER put anything after the end of the script. The TTS could read it and it is not good. NO MORE THAN 30000 characters")
         
         client = openai.OpenAI()
         response = client.chat.completions.create(
@@ -335,7 +335,7 @@ async def generate_episodes(req: EpisodeRequest):
                     results.append(
                         EpisodeResponse(
                             title=title,
-                            description=content,
+                            description=content[:300],
                             audio_url=audio_url,
                             transcript=script_text
                         )
@@ -348,7 +348,7 @@ async def generate_episodes(req: EpisodeRequest):
                     results.append(
                         EpisodeResponse(
                             title=title,
-                            description=content,
+                            description=content[:300],
                             audio_url="/static/audio/quota_exceeded.mp3",  # Placeholder or error audio
                             transcript=script_text
                         )
