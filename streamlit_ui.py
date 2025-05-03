@@ -316,18 +316,45 @@ with tab1:
     with col2:
         st.markdown("### 💡 Curious about...")
         
-        # Define fixed categories and topics since the recommendation system isn't working properly
-        fixed_recommendations = {
-            "Science": ["Quantum physics", "Marine biology", "Astronomy", "Genetics", "Climate science"],
-            "History": ["Ancient civilizations", "World War II", "Renaissance art", "Industrial revolution", "Space race"],
-            "Technology": ["Artificial intelligence", "Blockchain", "Augmented reality", "Robotics", "Cybersecurity"],
-            "Arts & Culture": ["Film history", "Modern literature", "Classical music", "Architecture styles", "Visual arts"]
-        }
-        
-        for category, topics in fixed_recommendations.items():
-            st.markdown(f"**{category}**")
-            for topic in topics:
-                if st.button(f"➕ {topic}", key=f"recommendation_{topic}"):
+        try:
+            # Get dynamic recommendations from the recommendation engine
+            recommendations = get_recommendations(count_per_category=5)
+            
+            # If we got recommendations, display them
+            if recommendations:
+                for category, topics in recommendations.items():
+                    # Format category name for display (capitalize, replace underscores)
+                    display_category = category.replace('_', ' ').title()
+                    st.markdown(f"**{display_category}**")
+                    
+                    # Display each topic in the category
+                    for topic in topics:
+                        if st.button(f"➕ {topic}", key=f"recommendation_{category}_{topic}"):
+                            added = add_recommendation(topic)
+                            if added:
+                                # When a topic is added, track it for future recommendations
+                                track_topics([topic])
+                                st.rerun()
+            else:
+                # Fallback to some default categories if the recommendation engine failed
+                fallback_recommendations = {
+                    "Science": ["Quantum physics", "Marine biology", "Astronomy"],
+                    "Technology": ["Artificial intelligence", "Blockchain", "Cybersecurity"],
+                }
+                
+                for category, topics in fallback_recommendations.items():
+                    st.markdown(f"**{category}**")
+                    for topic in topics:
+                        if st.button(f"➕ {topic}", key=f"fallback_{category}_{topic}"):
+                            added = add_recommendation(topic)
+                            if added:
+                                st.rerun()
+        except Exception as e:
+            st.error(f"Error loading recommendations: {str(e)}")
+            # If all else fails, show a minimal set of recommendations
+            st.markdown("**Featured Topics**")
+            for topic in ["Artificial intelligence", "World history", "Climate science"]:
+                if st.button(f"➕ {topic}", key=f"emergency_{topic}"):
                     added = add_recommendation(topic)
                     if added:
                         st.rerun()

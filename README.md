@@ -12,7 +12,39 @@ Not sure what to learn? Just type your interest and get a personalized audio pla
 
 ### MindSnacks makes learning as easy as pressing play.
 
-This app uses OpenAI's API to generate quick learning episodes about your inputs, and 11Labs's API for TTS. 
-This whole project was created used Python with Streamlit.
+# Technologies
+- OpenAI's API to generate quick text learning episodes about the input
+- 11Labs's API for TTS conversion
+- News API for finding trending topics for recommendations
+- Python, Streamlit (frontend), FastAPI (backend) HTML/CSS (just a bit)
 
 # Setup
+2 ways to try this app:
+## a. Using the already deployed version (recommended)
+1. Click this link: https://mindsnacks.streamlit.app/
+
+Posible limitations: I run out of API Credits. 
+
+## b. Cloning this repo
+1. Clone this repo
+2. Create  `.env` with your API Keys for OpenAI, 11Labs and News API like this:
+
+```
+OPENAI_API_KEY=your_openai_api_key
+ELEVENLABS_API_KEY=your_elevenlabs_api_key
+NEWS_API_KEY=your_newsapi_key
+```
+Note: 11Labs and NewsAPI provide free trials that could be used to try this out.
+
+3. Install all dependencies with  `pip install -r requirements.txt`
+
+
+# Features & Usage
+
+- Generate bite-sized audio learning episodes on any topic
+- Dynamic topic recommendations from multiple sources: Current news headlines via News API integration, popular topics based on user selection history, recently selected topics for quick access, etc...
+- Search functionality for your learning history
+- Audio player with download capability for offline listening
+- "Fill my curiosity" button for topic discovery
+
+### This project was created for Global MIT AI Hackathon 2025 by Fabian Sanchez.
