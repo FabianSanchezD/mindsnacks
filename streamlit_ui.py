@@ -4,20 +4,21 @@ import requests
 
 st.set_page_config(page_title="MindSnacks", page_icon="🧠")
 
-# Load and display the logo
-logo = Image.open("img\mindsnacks_logov2_nospace.png")
+logo = Image.open("mindsnacks_logov2_nospace.png")
 st.image(logo, width=120)
 
 st.title("🧠 MindSnacks")
 st.subheader("Bite-sized learning for hungry minds")
 
 with st.form("topic_form"):
-    topics_input = st.text_input("Enter topics separated by commas", "History of AI, Why sea levels are rising")
+    st.write("Add topics for your learning playlist:")
+    topics_input = st.text_area("Enter topics (one per line):")
+    topics = [topic.strip() for topic in topics_input.split("\n") if topic.strip()]
     num_episodes = st.slider("Number of episodes", 1, 10, 6)
-    submitted = st.form_submit_button("Generate Learning Playlist")
+    submitted = st.form_submit_button("Create Learning Playlist")  # Ensure submit button is present
 
 if submitted:
-    topics = [topic.strip() for topic in topics_input.split(",") if topic.strip()]
+    topics = [topic.strip() for topic in topics if topic.strip()]
     with st.spinner("Generating your personalized audio snippets..."):
         try:
             res = requests.post(
