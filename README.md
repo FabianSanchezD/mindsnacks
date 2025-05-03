@@ -23,7 +23,7 @@ Not sure what to learn? Just type your interest and get a personalized audio pla
 ## a. Using the already deployed version (recommended)
 1. Click this link: https://mindsnacks.streamlit.app/
 
-Posible limitations: I run out of API Credits. 
+Posible limitations: I run out of API Credits, mostly 11Labs (only 6k left). 
 
 ## b. Cloning this repo
 1. Clone this repo
