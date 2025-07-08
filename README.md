@@ -1,8 +1,6 @@
-# Description
-
 Ever wondered how to turn dead time into brain time?
 
-## Introducing MindSnacks, bite-sized learning for hungry minds! 
+# Introducing MindSnacks, bite-sized learning for hungry minds! 
 
 Whether you are going for a run/walk, washing your clothes, cooking your favorite meal; you can now use that extra time to do your task and learn new things! 
 
@@ -19,13 +17,8 @@ Not sure what to learn? Just type your interest and get a personalized audio pla
 - Python, Streamlit (frontend), FastAPI (backend) HTML/CSS (just a bit)
 
 # Setup
-## 2 ways to try this app:
-## a. Using the already deployed version (recommended)
-1. Click this link: https://mindsnacks.streamlit.app/
 
-Posible limitations: I run out of API Credits, mostly 11Labs (only 6k left). 
-
-## b. Cloning this repo
+## Cloning this repo
 1. Clone this repo
 2. Create  `.env` with your API Keys for OpenAI, 11Labs and News API like this:
 
@@ -36,12 +29,19 @@ NEWS_API_KEY=your_newsapi_key
 ```
 Note: 11Labs and NewsAPI provide free trials that could be used to try this out.
 
-3. IMPORTANT: The files on GitHub are made so that the app is deployed, so we need to change everywhere `https://mindsnacks.onrender.com` this appears, to `http://localhost:8000/`. (This is ONLY on the `streamlit_ui.py` file)
+3. Update Streamlit URL (for local development):
+   In streamlit_ui.py, change all instances of
+```
+https://mindsnacks.onrender.com
+```
+to:
+```
+http://localhost:8000
+```
 
 3. Install all dependencies with  `pip install -r requirements.txt`
 4. Run backend with: `python run main.py`
-5. Run frontend with:  ``
-
+5. Run frontend with:  `streamlit run`
 
 # Features & Usage
 
@@ -52,3 +52,4 @@ Note: 11Labs and NewsAPI provide free trials that could be used to try this out.
 - "Fill my curiosity" button for topic discovery
 
 ### This project was created for Global MIT AI Hackathon 2025 by Fabian Sanchez.
+#
